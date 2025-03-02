@@ -1,0 +1,14 @@
+{
+    "name": "smartcontract",
+    "version": "1.0.0",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+      "start": "node index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "Simulación de smart contract para proyecto comunitario médico en Guatemala utilizando listas enlazadas."
+  }
+  

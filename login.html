@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Medical Donations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f0f3;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        .logo {
+            width: 50px;
+            height: 50px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f5f7f9;
+            margin-bottom: 15px;
+        }
+        button {
+            width: 100%;
+            background-color: #00b4d8;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0096c7;
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-title">
+            <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" alt="Medical Logo" class="logo">
+            <h1>Medical Donations</h1>
+        </div>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login().catch(console.error)">Login</button>
+        <button onclick="registerUser().catch(console.error)">Register</button>
+    </div>
+
+    <script>
+        // Función para hacer la contraseña más segura
+        async function hacerContraseñaSegura(contraseña) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(contraseña);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        // Usuario administrador predefinido
+        const admin = {
+            username: 'admin',
+            password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', // admin123 convertida
+            role: 'admin'
+        };
+
+        let users = JSON.parse(localStorage.getItem('users')) || [admin];
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const contraseñaSegura = await hacerContraseñaSegura(password);
+
+            const user = users.find(u => u.username === username && u.password === contraseñaSegura);
+
+            if (user) {
+                const infoUsuario = {...user};
+                delete infoUsuario.password; // No guardamos la contraseña en la sesión
+                localStorage.setItem('currentUser', JSON.stringify(infoUsuario));
+                window.location.href = 'html_index.html';
+            } else {
+                alert('Usuario o contraseña incorrectos');
+            }
+        }
+
+        async function registerUser() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+
+            if (users.some(u => u.username === username)) {
+                alert('El usuario ya existe');
+                return;
+            }
+
+            const contraseñaSegura = await hacerContraseñaSegura(password);
+            const newUser = {
+                username,
+                password: contraseñaSegura,
+                role: 'donor'
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('Usuario registrado exitosamente');
+        }
+        // Agregar esta función de migración justo después de definir la función hacerContraseñaSegura
+        async function migrarContraseñasAnteriores() {
+            const usuariosAntiguos = JSON.parse(localStorage.getItem('users')) || [];
+            if (usuariosAntiguos.length > 0) {
+                for (let usuario of usuariosAntiguos) {
+                    if (usuario.password.length < 64) { // Si no está hasheada
+                        usuario.password = await hacerContraseñaSegura(usuario.password);
+                    }
+                }
+                localStorage.setItem('users', JSON.stringify(usuariosAntiguos));
+            }
+        }
+    
+        // Llamar a la migración al cargar la página
+        migrarContraseñasAnteriores();
+    </script>
+</body>
+</html>
