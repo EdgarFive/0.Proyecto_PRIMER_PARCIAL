@@ -43,7 +43,13 @@
         }
         .donation-section {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;  /* Cambiar a una columna */
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;  /* Dos columnas para el contenido inferior */
             gap: 30px;
             margin-bottom: 30px;
         }
@@ -163,7 +169,9 @@
                     <p>Recaudado: Q<span id="currentAmount">0</span> / Meta: Q<span id="goalAmount">2000000</span></p>
                 </div>
             </div>
+        </div>
 
+        <div class="bottom-section">
             <div class="donation-history">
                 <h2>Historial de Donaciones</h2>
                 <div class="filters">
@@ -174,11 +182,11 @@
                 </div>
                 <div id="donationsList"></div>
             </div>
-        </div>
 
-        <div class="distribution-chart">
-            <h2>Distribución de tus Donaciones</h2>
-            <div id="distributionChart"></div>
+            <div class="distribution-chart">
+                <h2>Distribución de tus Donaciones</h2>
+                <div id="distributionChart"></div>
+            </div>
         </div>
     </div>
 
