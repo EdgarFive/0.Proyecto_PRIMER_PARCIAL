@@ -1,14 +1,26 @@
 {
-    "name": "smartcontract",
+    "name": "medical-donations-system",
     "version": "1.0.0",
+    "description": "Simulación de smart contract para proyecto comunitario médico en Guatemala utilizando listas enlazadas.",
     "main": "index.js",
     "type": "module",
     "scripts": {
-      "start": "node index.js"
+        "start": "node index.js",
+        "test": "echo \"No test specified\" && exit 1"
     },
-    "keywords": [],
-    "author": "",
+    "keywords": [
+        "medical",
+        "donations",
+        "smart-contract",
+        "linked-list",
+        "guatemala"
+    ],
+    "author": {
+        "name": "EdgarChinchilla"
+    },
     "license": "ISC",
-    "description": "Simulación de smart contract para proyecto comunitario médico en Guatemala utilizando listas enlazadas."
-  }
+    "engines": {
+        "node": ">=14.0.0"
+    }
+}
   

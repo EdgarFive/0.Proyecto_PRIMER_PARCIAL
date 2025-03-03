@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Usuario - Dona-Medical</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f5f7;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #00b4d8, #0077be);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .donation-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .donation-form {
+            background-color: #f8fdff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .progress-bar {
+            height: 25px;
+            background: linear-gradient(to right, #e0e5e9 50%, #f5f7f9 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            margin: 15px 0;
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00b4d8, #48cae4);
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e5e9;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        input[type="number"]:focus {
+            border-color: #00b4d8;
+            outline: none;
+        }
+        button {
+            background: linear-gradient(135deg, #00b4d8, #0096c7);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0096c7, #023e8a);
+            transform: translateY(-2px);
+        }
+        .donation-history {
+            background-color: #f8fdff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .donation-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00b4d8;
+            transition: transform 0.2s;
+        }
+        .donation-item:hover {
+            transform: translateX(5px);
+        }
+        .distribution-chart {
+            background-color: #f8fdff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .distribution-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #48cae4;
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e5e9;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            background-color: white;
+        }
+        select:focus {
+            border-color: #00b4d8;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bienvenido, <span id="userName"></span></h1>
+            <button type="button" id="logoutButton" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <div class="donation-section">
+            <div class="donation-form">
+                <h2>Realizar Donación</h2>
+                <input type="number" id="donationAmount" placeholder="Cantidad a donar">
+                <button type="button" onclick="makeDonation()">Donar</button>
+
+                <div class="progress-container">
+                    <h3>Progreso de Recaudación</h3>
+                    <div class="progress-bar">
+                        <div class="progress" id="progressBar"></div>
+                    </div>
+                    <p>Recaudado: Q<span id="currentAmount">0</span> / Meta: Q<span id="goalAmount">2000000</span></p>
+                </div>
+            </div>
+
+            <div class="donation-history">
+                <h2>Historial de Donaciones</h2>
+                <div class="filters">
+                    <select id="sortFilter" onchange="filterDonations()">
+                        <option value="date">Ordenar por Fecha</option>
+                        <option value="amount">Ordenar por Monto</option>
+                    </select>
+                </div>
+                <div id="donationsList"></div>
+            </div>
+        </div>
+
+        <div class="distribution-chart">
+            <h2>Distribución de tus Donaciones</h2>
+            <div id="distributionChart"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import CrowdfundingContract from './CrowdfundingContract.js';
+        import Transaction from './Transaction.js';
+        let contract;
+
+        // Definir funciones primero
+        function updateUI() {
+            const progress = (contract.totalDonations / 2000000) * 100;
+            document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('currentAmount').textContent = 
+                contract.totalDonations.toLocaleString('es-GT');
+            filterDonations();
+            updateDistributionChart();
+        }
+
+        function displayDonations(transactions) {
+            const list = document.getElementById('donationsList');
+            list.innerHTML = transactions.map(t => `
+                <div class="donation-item">
+                    <p>Monto: Q${t.amount.toLocaleString('es-GT')} - 
+                       Fecha: ${new Date(t.timestamp).toLocaleString()}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateDistributionChart() {
+            const chart = document.getElementById('distributionChart');
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const userDonations = contract.getTransactions()
+                .filter(t => t.donor === currentUser.username);
+            const distribution = contract.calculateUserImpact(
+                userDonations.reduce((sum, t) => sum + t.amount, 0)
+            );
+            
+            chart.innerHTML = Object.entries(distribution)
+                .map(([area, amount]) => `
+                    <div class="distribution-item">
+                        <p>${area}: Q${amount.toLocaleString('es-GT')}</p>
+                    </div>
+                `).join('');
+        }
+
+        window.filterDonations = function() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const filter = document.getElementById('sortFilter').value;
+            const transactions = contract.getTransactions()
+                .filter(t => t.donor === currentUser.username);
+
+            if (filter === 'amount') {
+                transactions.sort((a, b) => b.amount - a.amount);
+            } else {
+                transactions.sort((a, b) => b.timestamp - a.timestamp);
+            }
+
+            displayDonations(transactions);
+        };
+
+        // Inicialización única
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Inicializar contrato
+            contract = new CrowdfundingContract(2000000, {
+                "Servicios de Atención Primaria": 20,
+                "Salud Materno-Infantil": 15,
+                "Salud Sexual y Reproductiva": 10,
+                "Educación y Capacitación en Salud": 10,
+                "Nutrición y Seguridad Alimentaria": 10,
+                "Salud Mental y Apoyo Psicosocial": 10,
+                "Infraestructura y Equipamiento Médico": 10,
+                "Logística y Cadena de Suministros": 5,
+                "Monitoreo y Evaluación": 5,
+                "Fondo de Emergencia": 5
+            });
+
+            // Cargar datos guardados
+            try {
+                const savedData = JSON.parse(localStorage.getItem('crowdfundingData')) || {
+                    totalDonations: 0,
+                    transactions: []
+                };
+
+                if (savedData.transactions && savedData.transactions.length > 0) {
+                    savedData.transactions.forEach(t => {
+                        const transaction = new Transaction(
+                            t.id,
+                            t.donor,
+                            t.amount,
+                            new Date(t.timestamp),
+                            t.description
+                        );
+                        contract.addDonation(transaction);
+                    });
+                }
+
+                window.contract = contract;
+                document.getElementById('userName').textContent = currentUser.username;
+                updateUI();
+            } catch (error) {
+                console.error('Error al cargar datos:', error);
+                alert('Error al cargar los datos guardados');
+            }
+        });
+
+        window.makeDonation = async function() {
+            try {
+                const amount = Number(document.getElementById('donationAmount').value);
+                if (amount <= 0) {
+                    alert('Por favor ingrese un monto válido');
+                    return;
+                }
+                
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (!currentUser) {
+                    alert('Por favor inicie sesión nuevamente');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const transaction = new Transaction(
+                    Date.now(),
+                    currentUser.username,
+                    amount,
+                    new Date(),
+                    "Donación médica"
+                );
+                
+                // Modificar esta línea para pasar la transacción directamente
+                contract.addDonation(transaction);
+                
+                const updatedData = {
+                    totalDonations: contract.totalDonations,
+                    transactions: contract.getTransactions()
+                };
+                localStorage.setItem('crowdfundingData', JSON.stringify(updatedData));
+                
+                updateUI();
+                document.getElementById('donationAmount').value = '';
+                alert('¡Donación realizada con éxito!');
+            } catch (error) {
+                console.error('Error al realizar la donación:', error);
+                alert('Ocurrió un error al procesar la donación');
+            }
+        };
+
+        window.logout = function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        };
+
+        // Verificación inicial de autenticación
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+            document.getElementById('userName').textContent = currentUser.username;
+            updateUI();
+        });
+    </script>
+</body>
+</html>

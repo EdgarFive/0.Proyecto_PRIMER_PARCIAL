@@ -3,14 +3,29 @@
 
 class Transaction {
     constructor(id, donor, amount, timestamp, description = "") {
-      this.id = id;                   // Identificador único (se usa Date.now())
-      this.donor = donor;             // Nombre o identificador del donante
-      this.amount = amount;           // Monto de la donación
-      this.timestamp = timestamp;     // Fecha y hora de la transacción
-      this.description = description; // Descripción (ej. "Donation")
-      this.next = null;               // Puntero al siguiente nodo de la lista
+        // Validaciones
+        if (!id) throw new Error('Transaction ID is required');
+        if (!donor) throw new Error('Donor information is required');
+        if (!amount || amount <= 0) throw new Error('Invalid donation amount');
+        if (!(timestamp instanceof Date)) throw new Error('Invalid timestamp');
+
+        this.id = id;                   // Identificador único (se usa Date.now())
+        this.donor = donor;             // Nombre o identificador del donante
+        this.amount = Number(amount);    // Asegurar que amount sea número
+        this.timestamp = timestamp;      // Fecha y hora de la transacción
+        this.description = description;  // Descripción (ej. "Donation")
     }
-  }
-  
-  export default Transaction;
+
+    toJSON() {
+        return {
+            id: this.id,
+            donor: this.donor,
+            amount: this.amount,
+            timestamp: this.timestamp,
+            description: this.description
+        };
+    }
+}
+
+export default Transaction;
   

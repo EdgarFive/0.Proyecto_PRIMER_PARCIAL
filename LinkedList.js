@@ -4,67 +4,76 @@
 import Transaction from './Transaction.js';
 
 class LinkedList {
-  constructor() {
-    this.head = null; // Inicio de la lista
-  }
+    constructor() {
+        this.head = null;
+        this.length = 0;  // Agregar contador de elementos
+    }
   
-  // Agregar una transacción al final de la lista (registro cronológico)
-  addTransaction(transaction) {
-    if (!this.head) {
-      this.head = transaction;
-    } else {
-      let current = this.head;
-      while (current.next) {
-        current = current.next;
-      }
-      current.next = transaction;
-    }
-  }
-  
-  // Eliminar una transacción por su ID
-  removeTransactionById(id) {
-    if (!this.head) return;
-    if (this.head.id === id) {
-      this.head = this.head.next;
-      return;
-    }
-    let current = this.head;
-    while (current.next && current.next.id !== id) {
-      current = current.next;
-    }
-    if (current.next) {
-      current.next = current.next.next;
-    }
-  }
-  
-  // Mostrar el historial completo de transacciones
-  showHistory() {
-    let current = this.head;
-    while (current) {
-      console.log(`ID: ${current.id}, Donante: ${current.donor}, Monto: Q${current.amount}, Fecha: ${current.timestamp}, Desc: ${current.description}`);
-      current = current.next;
-    }
-  }
+    addTransaction(transaction) {
+        if (!(transaction instanceof Transaction)) {
+            throw new Error('Invalid transaction object');
+        }
 
-    // Convertir la lista enlazada a un array para localStorage
+        const newNode = {
+            data: transaction,
+            next: null
+        };
+
+        if (!this.head) {
+            this.head = newNode;
+        } else {
+            let current = this.head;
+            while (current.next) {
+                current = current.next;
+            }
+            current.next = newNode;
+        }
+        this.length++;  // Incrementar contador
+    }
+  
+    removeTransactionById(id) {
+        if (!this.head) return false;  // Retornar false si no se encontró
+        
+        if (this.head.data.id === id) {
+            this.head = this.head.next;
+            this.length--;  // Decrementar contador
+            return true;
+        }
+        
+        let current = this.head;
+        while (current.next && current.next.data.id !== id) {
+            current = current.next;
+        }
+        
+        if (current.next) {
+            current.next = current.next.next;
+            this.length--;  // Decrementar contador
+            return true;
+        }
+        return false;
+    }
+
     toArray() {
         const array = [];
         let current = this.head;
         while (current) {
             array.push({
-                id: current.id,
-                donor: current.donor,
-                amount: current.amount,
-                timestamp: current.timestamp,
-                description: current.description
+                id: current.data.id,
+                donor: current.data.donor,
+                amount: current.data.amount,
+                timestamp: current.data.timestamp,
+                description: current.data.description
             });
             current = current.next;
         }
         return array;
     }
 
-    // Reconstruir la lista desde un array
     fromArray(array) {
+        if (!Array.isArray(array)) {
+            throw new Error('Input must be an array');
+        }
+
         this.head = null;
         array.forEach(item => {
             const transaction = new Transaction(

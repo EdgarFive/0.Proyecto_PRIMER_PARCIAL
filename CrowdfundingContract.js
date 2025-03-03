@@ -5,85 +5,125 @@ import LinkedList from './LinkedList.js';
 import Transaction from './Transaction.js';
 
 class CrowdfundingContract {
-  constructor(meta, distributionPercentages, emergencyThreshold, earlyReleaseEnabled = true) {
-    this.transactions = new LinkedList(); // Lista de todas las donaciones
-    this.totalDonations = 0;                // Acumulado de donaciones en la ronda actual
-    this.meta = meta;                       // Meta de financiamiento (ej. Q2,000,000)
-    this.distributionPercentages = distributionPercentages; // Porcentajes asignados a cada área
-    this.emergencyReserve = 0;              // Fondo de imprevistos acumulado
-    this.emergencyThreshold = emergencyThreshold; // Umbral para activar transferencia desde el fondo de imprevistos (ej. Q1,000,000)
-    this.earlyReleaseEnabled = earlyReleaseEnabled; // Permitir liberación anticipada en casos extremos
-    this.mainFund = 0;                      // Fondo principal que se usa para distribuir
-  }
-  
-  // Función para recibir donaciones
-  addDonation(amount, donor) {
-    // Se simula que siempre es válido el aporte.
-    const transaction = new Transaction(Date.now(), donor, amount, new Date(), "Donation");
-    this.transactions.addTransaction(transaction);
-    this.totalDonations += amount;
-    console.log(`Donación de Q${amount} recibida de ${donor}. Total acumulado: Q${this.totalDonations}`);
-    
-    // Si se alcanza o supera la meta, se ejecuta la distribución automática
-    if (this.totalDonations >= this.meta) {
-      this.distributeFunds();
+    constructor(meta, distributionPercentages, emergencyThreshold = 1000000, earlyReleaseEnabled = true) {
+        this.transactions = new LinkedList();
+        this.totalDonations = 0;
+        this.meta = meta;
+        this.distributionPercentages = distributionPercentages;
+        this.emergencyReserve = 0;
+        this.emergencyThreshold = emergencyThreshold;
+        this.earlyReleaseEnabled = earlyReleaseEnabled;
+        this.mainFund = 0;
+        this.EMERGENCY_AREA = "Fondo de Emergencia";
     }
-  }
-  
-  // Función que distribuye los fondos acumulados según los porcentajes establecidos
-  distributeFunds() {
-    console.log("Meta alcanzada. Ejecutando distribución de fondos...");
-    
-    // Transferir las donaciones al fondo principal y reiniciar el contador de donaciones
-    this.mainFund += this.totalDonations;
-    this.totalDonations = 0;
-    
-    // Objeto para almacenar los montos distribuidos a cada área
-    let distributionResults = {};
-    for (let area in this.distributionPercentages) {
-      let percent = this.distributionPercentages[area];
-      let amountForArea = (this.mainFund * percent) / 100;
-      distributionResults[area] = amountForArea;
-      console.log(`Área: ${area}, ${percent}% => Q${amountForArea}`);
+
+    addDonation(transaction) {
+        if (transaction instanceof Transaction) {
+            this.transactions.addTransaction(transaction);
+            this.totalDonations += transaction.amount;
+        } else if (typeof transaction === 'number' && arguments.length > 1) {
+            const amount = transaction;
+            const donor = arguments[1];
+            const newTransaction = new Transaction(
+                Date.now(),
+                donor,
+                amount,
+                new Date(),
+                "Donación médica"
+            );
+            this.transactions.addTransaction(newTransaction);
+            this.totalDonations += amount;
+            transaction = newTransaction;
+        } else {
+            throw new Error('Invalid donation parameters');
+        }
+        
+        if (this.totalDonations >= this.meta) {
+            this.distributeFunds();
+        }
+        
+        return transaction;
     }
-    
-    // Actualizar el fondo de imprevistos (área específica)
-    const emergencyArea = "Fondo para resguardar dinero por cualquier imprevisto";
-    if (emergencyArea in distributionResults) {
-      this.emergencyReserve += distributionResults[emergencyArea];
-      console.log(`Fondo de imprevistos actualizado: Q${this.emergencyReserve}`);
-      
-      // Si se alcanza el umbral, transferir el 50% de ese fondo al fondo principal
-      if (this.emergencyReserve >= this.emergencyThreshold) {
-        let transferAmount = this.emergencyReserve * 0.5;
-        console.log(`Umbral de imprevistos alcanzado (Q${this.emergencyThreshold}). Transfiriendo 50% (Q${transferAmount}) al fondo principal.`);
-        this.mainFund += transferAmount;
-        this.emergencyReserve -= transferAmount;
-      }
+
+    distributeFunds() {
+        this.mainFund += this.totalDonations;
+        this.totalDonations = 0;
+        
+        let distributionResults = {};
+        for (let area in this.distributionPercentages) {
+            let percent = this.distributionPercentages[area];
+            let amountForArea = (this.mainFund * percent) / 100;
+            distributionResults[area] = amountForArea;
+        }
+        
+        if (this.EMERGENCY_AREA in distributionResults) {
+            this.emergencyReserve += distributionResults[this.EMERGENCY_AREA];
+            
+            if (this.emergencyReserve >= this.emergencyThreshold) {
+                let transferAmount = this.emergencyReserve * 0.5;
+                this.mainFund += transferAmount;
+                this.emergencyReserve -= transferAmount;
+            }
+        }
+        
+        this.mainFund = 0;
+        return distributionResults;
     }
-    
-    // Notificar a los donantes (simulación de evento en tiempo real)
-    console.log("Distribución completa. Se han asignado los fondos a cada área.");
-    
-    // Reiniciar el fondo principal para la próxima ronda (se asume que los fondos distribuidos se utilizan)
-    this.mainFund = 0;
-  }
-  
-  // Permite la liberación anticipada de fondos en caso de extrema necesidad
-  earlyRelease() {
-    if (this.earlyReleaseEnabled && this.totalDonations > 0) {
-      console.log("Liberación anticipada activada. Distribuyendo fondos actuales aunque no se alcanzó la meta.");
-      this.distributeFunds();
-    } else {
-      console.log("No se permite la liberación anticipada o no hay fondos para distribuir.");
+
+    earlyRelease() {
+        if (this.earlyReleaseEnabled && this.totalDonations > 0) {
+            return this.distributeFunds();
+        }
+        return null;
     }
-  }
-  
-  // Mostrar el historial de todas las transacciones
-  showHistory() {
-    console.log("Historial de transacciones:");
-    this.transactions.showHistory();
-  }
+
+    getTransactions() {
+        return this.transactions.toArray();
+    }
+
+    getUserDonations(donor) {
+        let total = 0;
+        let current = this.transactions.head;
+        
+        while (current) {
+            if (current.data.donor === donor) {
+                total += current.data.amount;
+            }
+            current = current.next;
+        }
+        
+        return total;
+    }
+
+    getFundDistribution() {
+        const distribution = {};
+        const total = this.totalDonations;
+        
+        Object.entries(this.distributionPercentages).forEach(([area, percentage]) => {
+            distribution[area] = (total * percentage) / 100;
+        });
+        
+        return distribution;
+    }
+
+    generateCertificate(donor) {
+        const totalDonated = this.getUserDonations(donor);
+        
+        return {
+            donor,
+            totalDonated,
+            date: new Date(),
+            impact: this.calculateUserImpact(totalDonated)
+        };
+    }
+
+    calculateUserImpact(amount) {
+        const impact = {};
+        for (let [area, percentage] of Object.entries(this.distributionPercentages)) {
+            impact[area] = (amount * percentage) / 100;
+        }
+        return impact;
+    }
 }
 
 export default CrowdfundingContract;

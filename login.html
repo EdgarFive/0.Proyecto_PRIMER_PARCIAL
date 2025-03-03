@@ -75,15 +75,14 @@
 
     <script>
         // Función para hacer la contraseña más segura
-        async function hacerContraseñaSegura(contraseña) {
+        async function makePasswordSecure(password) {
             const encoder = new TextEncoder();
-            const data = encoder.encode(contraseña);
+            const data = encoder.encode(password);
             const hash = await crypto.subtle.digest('SHA-256', data);
             return Array.from(new Uint8Array(hash))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('');
         }
-
         // Usuario administrador predefinido
         const admin = {
             username: 'admin',
@@ -96,15 +95,17 @@
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const contraseñaSegura = await hacerContraseñaSegura(password);
+            const securePassword = await makePasswordSecure(password);
 
-            const user = users.find(u => u.username === username && u.password === contraseñaSegura);
-
+            const user = users.find(u => u.username === username && u.password === securePassword);
+            
             if (user) {
-                const infoUsuario = {...user};
-                delete infoUsuario.password; // No guardamos la contraseña en la sesión
-                localStorage.setItem('currentUser', JSON.stringify(infoUsuario));
-                window.location.href = 'html_index.html';
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                if (user.role === 'admin') {
+                    window.location.href = 'admin_dashboard.html';
+                } else {
+                    window.location.href = 'user_dashboard.html';
+                }
             } else {
                 alert('Usuario o contraseña incorrectos');
             }
@@ -124,10 +125,10 @@
                 return;
             }
 
-            const contraseñaSegura = await hacerContraseñaSegura(password);
+            const securePassword = await makePasswordSecure(password);
             const newUser = {
                 username,
-                password: contraseñaSegura,
+                password: securePassword,
                 role: 'donor'
             };
 
@@ -135,21 +136,21 @@
             localStorage.setItem('users', JSON.stringify(users));
             alert('Usuario registrado exitosamente');
         }
-        // Agregar esta función de migración justo después de definir la función hacerContraseñaSegura
-        async function migrarContraseñasAnteriores() {
-            const usuariosAntiguos = JSON.parse(localStorage.getItem('users')) || [];
-            if (usuariosAntiguos.length > 0) {
-                for (let usuario of usuariosAntiguos) {
-                    if (usuario.password.length < 64) { // Si no está hasheada
-                        usuario.password = await hacerContraseñaSegura(usuario.password);
+
+        async function migrateOldPasswords() {
+            const oldUsers = JSON.parse(localStorage.getItem('users')) || [];
+            if (oldUsers.length > 0) {
+                for (let user of oldUsers) {
+                    if (user.password.length < 64) { // Si no está hasheada
+                        user.password = await makePasswordSecure(user.password);
                     }
                 }
-                localStorage.setItem('users', JSON.stringify(usuariosAntiguos));
+                localStorage.setItem('users', JSON.stringify(oldUsers));
             }
         }
     
         // Llamar a la migración al cargar la página
-        migrarContraseñasAnteriores();
+        migrateOldPasswords();
     </script>
 </body>
 </html>
