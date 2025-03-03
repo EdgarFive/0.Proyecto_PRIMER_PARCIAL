@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,7 +40,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        .progress-container {
+        .progress-container, .donation-form, .donation-history {
             background-color: #f5f7f9;
             padding: 20px;
             border-radius: 15px;
@@ -50,29 +52,17 @@
             border-radius: 10px;
             position: relative;
             overflow: hidden;
+            margin: 10px 0;
         }
         .progress {
             height: 100%;
             background-color: #00b4d8;
             border-radius: 10px;
-            width: 0%;
+            width: 0;
             transition: width 0.5s ease-in-out;
             position: absolute;
             left: 0;
             top: 0;
-        }
-        .progress {
-            background-color: #00b4d8;
-        }
-        .donation-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .donation-form, .donation-history {
-            background-color: #f5f7f9;
-            padding: 20px;
-            border-radius: 15px;
         }
         input {
             width: 100%;
@@ -100,9 +90,24 @@
             border-radius: 10px;
             margin-top: 10px;
         }
-        // Agregar este estilo
         .hidden {
             display: none;
+        }
+        .certificate {
+            border: 2px solid #00b4d8;
+            padding: 30px;
+            text-align: center;
+            margin-top: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .certificate-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e5e9;
+            font-style: italic;
+            color: #666;
         }
     </style>
 </head>
@@ -110,25 +115,23 @@
     <div class="container">
         <div class="header">
             <div class="logo-title">
-                <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" alt="Medical Logo" class="logo">
-                <h1>Medical Donations</h1>
+                <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" class="logo">
+                <h1>Dona-Medical</h1>
             </div>
             <div class="nav-tabs">
-                <button onclick="logout()">Logout</button>
+                <button onclick="logout()">Cerrar sesión</button>
             </div>
         </div>
-        
         <div class="donation-section">
             <div class="donation-form">
-                <h3>Make a Donation</h3>
-                <p>Welcome, <span id="userDisplay"></span></p>
-                <!-- Solo mostrar el formulario de donación si no es administrador -->
-                <div id="donationFormContent" style="display: none;">
-                    <input type="number" id="amount" placeholder="Amount">
-                    <button onclick="makeDonation()">DONATE</button>
+                <h3>Haz una donación</h3>
+                <p>Bienvenido, <span id="userDisplay"></span></p>
+                <div id="donationFormContent">
+                    <input type="number" id="amount" placeholder="Cantidad">
+                    <button onclick="makeDonation()">DONAR</button>
                 </div>
-                <div id="adminMessage" style="display: none;">
-                    <p>Administrators cannot make donations.</p>
+                <div id="adminMessage" class="hidden">
+                    <p>Los administradores no pueden realizar donaciones.</p>
                 </div>
                 <div class="progress-container">
                     <p class="progress-info">Recaudado: Q<span id="currentAmount">0</span> / Meta: Q<span id="goalAmount">2000000</span></p>
@@ -137,115 +140,46 @@
                     </div>
                 </div>
             </div>
-
             <div class="donation-history">
-                <h3>Donation History</h3>
-                <!-- Filtros para administrador -->
-                <div id="adminFilters" style="display: none; margin-bottom: 15px;">
-                    <input type="text" id="userFilter" placeholder="Filter by username">
-                    <input type="date" id="dateFilter" placeholder="Filter by date">
-                    <button onclick="applyAdminFilters()">Apply Filters</button>
-                </div>
-                <!-- Filtros para usuario normal -->
-                <div id="userFilters" style="display: none; margin-bottom: 15px;">
-                    <select id="sortBy">
-                        <option value="date">Sort by Date</option>
-                        <option value="amount">Sort by Amount</option>
-                    </select>
-                    <button onclick="applySorting()">Apply</button>
-                </div>
+                <h3>Historial de donaciones</h3>
                 <div id="transactionHistory" class="transaction-history"></div>
             </div>
         </div>
     </div>
-    <script type="module">
-        import CrowdfundingContract from './CrowdfundingContract.js';
-
-        // Cargar datos guardados o inicializar nuevos
-        let savedData = JSON.parse(localStorage.getItem('crowdfundingData')) || {
-            totalDonations: 0,
-            transactions: []
-        };
-
-        // Configuración inicial
-        const distributionPercentages = {
-            "Servicios de Atención Primaria": 20,
-            "Salud Materno-Infantil": 15,
-            "Salud Sexual y Reproductiva": 10,
-            "Educación y Capacitación en Salud": 10,
-            "Nutrición y Seguridad Alimentaria": 10,
-            "Salud Mental y Apoyo Psicosocial": 10,
-            "Infraestructura y Equipamiento Médico": 10,
-            "Logística y Cadena de Suministros": 5,
-            "Monitoreo, Evaluación y Gestión Administrativa": 5,
-            "Fondo para resguardar dinero por cualquier imprevisto": 5
-        };
-
-        const contract = new CrowdfundingContract(2000000, distributionPercentages, 1000000);
-        
-        // Restaurar datos guardados
-        if (savedData.transactions.length > 0) {
-            savedData.transactions.forEach(transaction => {
-                contract.addDonation(transaction.amount, transaction.donor);
-            });
-        }
-
-        // Función para realizar donación
-        window.makeDonation = function() {
-            const amount = Number(document.getElementById('amount').value);
-
-            if (!amount) {
-                alert('Por favor ingrese el monto a donar');
+    <script>
+        function makeDonation() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const monto = Number(document.getElementById('amount').value);
+            
+            if (monto <= 0 || isNaN(monto)) {
+                alert('Por favor ingrese un monto válido mayor a 0.');
                 return;
             }
 
-            contract.addDonation(amount, currentUser.username);
-            
-            // Guardar en localStorage
-            localStorage.setItem('crowdfundingData', JSON.stringify({
-                totalDonations: contract.totalDonations,
-                transactions: contract.transactions.toArray()
-            }));
-
-            updateUI();
-            
+            // Simulación de donación
+            alert(`Gracias por donar Q${monto.toFixed(2)}!`);
             document.getElementById('amount').value = '';
         }
-        // Función para actualizar la interfaz
-        function updateUI() {
-            const progress = (contract.totalDonations / contract.meta) * 100;
-            document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
-            document.getElementById('currentAmount').textContent = contract.totalDonations;
-            document.getElementById('goalAmount').textContent = contract.meta;
-            
-            // Actualizar historial
-            const historyDiv = document.getElementById('transactionHistory');
-            historyDiv.innerHTML = '';
-            let current = contract.transactions.head;
-            while (current) {
-                // Mostrar solo las donaciones del usuario actual si no es admin
-                if (currentUser.role === 'admin' || current.donor === currentUser.username) {
-                    const entry = document.createElement('p');
-                    entry.textContent = `Donante: ${current.donor} - Monto: Q${current.amount} - Fecha: ${current.timestamp.toLocaleString()}`;
-                    historyDiv.appendChild(entry);
-                }
-                current = current.next;
+
+        function logout() {
+            if (confirm("¿Estás seguro que deseas cerrar sesión?")) {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
             }
         }
-        // Función para cerrar sesión
-        window.logout = function() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
-        }
-        // Verificar autenticación y mostrar nombre
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) {
-            window.location.href = 'login.html';
-        } else {
+
+        function configurarInterfazUsuario() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             document.getElementById('userDisplay').textContent = currentUser.username;
-            // Mostrar/ocultar formulario según el rol
+
             const donationForm = document.getElementById('donationFormContent');
             const adminMessage = document.getElementById('adminMessage');
+
             if (currentUser.role === 'admin') {
                 donationForm.style.display = 'none';
                 adminMessage.style.display = 'block';
@@ -254,77 +188,8 @@
                 adminMessage.style.display = 'none';
             }
         }
-        // Inicialización
-        updateUI();
-        // Toggle historial
-        window.toggleHistory = function() {
-            const historySection = document.querySelector('.donation-history');
-            historySection.classList.toggle('hidden');
-        }
-        // Agregar funciones de filtrado
-        window.applyAdminFilters = function() {
-            const userFilter = document.getElementById('userFilter').value.toLowerCase();
-            const dateFilter = document.getElementById('dateFilter').value;
-            
-            const historyDiv = document.getElementById('transactionHistory');
-            historyDiv.innerHTML = '';
-            let current = contract.transactions.head;
-            
-            while (current) {
-                const transactionDate = new Date(current.timestamp).toISOString().split('T')[0];
-                if ((!userFilter || current.donor.toLowerCase().includes(userFilter)) &&
-                    (!dateFilter || transactionDate === dateFilter)) {
-                    const entry = document.createElement('p');
-                    entry.textContent = `Donante: ${current.donor} - Monto: Q${current.amount} - Fecha: ${current.timestamp.toLocaleString()}`;
-                    historyDiv.appendChild(entry);
-                }
-                current = current.next;
-            }
-        }
 
-        window.applySorting = function() {
-            const sortBy = document.getElementById('sortBy').value;
-            const historyDiv = document.getElementById('transactionHistory');
-            const transactions = [];
-            
-            let current = contract.transactions.head;
-            while (current) {
-                if (current.donor === currentUser.username) {
-                    transactions.push(current);
-                }
-                current = current.next;
-            }
-            
-            transactions.sort((a, b) => {
-                if (sortBy === 'date') {
-                    return new Date(b.timestamp) - new Date(a.timestamp);
-                } else {
-                    return b.amount - a.amount;
-                }
-            });
-            
-            historyDiv.innerHTML = '';
-            transactions.forEach(transaction => {
-                const entry = document.createElement('p');
-                entry.textContent = `Donante: ${transaction.donor} - Monto: Q${transaction.amount} - Fecha: ${transaction.timestamp.toLocaleString()}`;
-                historyDiv.appendChild(entry);
-            });
-        }
-
-        // Modificar la verificación de autenticación para mostrar los filtros apropiados
-        if (currentUser) {
-            document.getElementById('userDisplay').textContent = currentUser.username;
-            const adminFilters = document.getElementById('adminFilters');
-            const userFilters = document.getElementById('userFilters');
-            
-            if (currentUser.role === 'admin') {
-                adminFilters.style.display = 'block';
-                userFilters.style.display = 'none';
-            } else {
-                adminFilters.style.display = 'none';
-                userFilters.style.display = 'block';
-            }
-        }
+        document.addEventListener("DOMContentLoaded", configurarInterfazUsuario);
     </script>
 </body>
 </html>
