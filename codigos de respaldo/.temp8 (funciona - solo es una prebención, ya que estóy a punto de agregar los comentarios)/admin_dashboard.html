@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - Dona-Medical</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f5f7;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #00b4d8, #0077be);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .donation-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .progress-bar {
+            height: 25px;
+            background: linear-gradient(to right, #e0e5e9 50%, #f5f7f9 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00b4d8, #48cae4);
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+        .filters {
+            background-color: #f8fdff;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        select, input {
+            padding: 12px;
+            border: 2px solid #e0e5e9;
+            border-radius: 10px;
+            background-color: white;
+            transition: all 0.3s;
+        }
+        select:focus, input:focus {
+            border-color: #00b4d8;
+            outline: none;
+        }
+        .donation-history {
+            background-color: #f8fdff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .transaction-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00b4d8;
+            transition: transform 0.2s;
+        }
+        .transaction-item:hover {
+            transform: translateX(5px);
+        }
+        button {
+            background: linear-gradient(135deg, #00b4d8, #0096c7);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0096c7, #023e8a);
+            transform: translateY(-2px);
+        }
+        .distribution-chart {
+            background-color: #f8fdff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .distribution-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #48cae4;
+        }
+        .amount-display {
+            font-size: 2em;
+            color: #023e8a;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" alt="Medical Logo" style="width: 40px; height: 40px;">
+                <h1>Panel de Administración - Dona-Medical</h1>
+            </div>
+            <button onclick="logout()">Cerrar Sesión</button>
+        </div>
+        <div class="amount-display">
+            <div>Meta Total: Q2,000,000</div>
+            <div>Recaudado: Q<span id="currentAmount">0</span></div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <input type="text" id="userFilter" placeholder="Buscar por usuario">
+            <input type="date" id="dateFilter">
+            <button onclick="filterTransactions()">Filtrar</button>
+            <button onclick="resetFilters()">Resetear</button>
+        </div>
+
+        <div class="donation-section">
+            <div class="donation-history">
+                <h2>Historial de Donaciones</h2>
+                <div id="transactionsList"></div>
+            </div>
+
+            <div class="distribution-chart">
+                <h2>Distribución de Fondos</h2>
+                <div id="distributionChart"></div>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+            import CrowdfundingContract from './CrowdfundingContract.js';
+            import Transaction from './Transaction.js';
+            
+            let contract;
+    
+            // Definir funciones primero
+            function updateUI() {
+                const progress = (contract.totalDonations / 2000000) * 100;
+                document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
+                document.getElementById('currentAmount').textContent = 
+                    contract.totalDonations.toLocaleString('es-GT');
+                displayTransactions(contract.getTransactions());
+                updateDistributionChart();
+            }
+    
+            function displayTransactions(transactions) {
+                const list = document.getElementById('transactionsList');
+                const sortedTransactions = [...transactions].sort((a, b) => b.timestamp - a.timestamp);
+
+                list.innerHTML = sortedTransactions.map(t => `
+                    <div class="transaction-item">
+                        <p><strong>Usuario:</strong> ${t.donor}</p>
+                        <p><strong>Monto:</strong> Q${t.amount.toLocaleString('es-GT')}</p>
+                        <p><strong>Fecha:</strong> ${new Date(t.timestamp).toLocaleString()}</p>
+                        <button onclick="deleteTransaction('${t.id}')" 
+                                style="background: #dc3545; width: auto; padding: 8px 16px; margin-top: 10px;">
+                            Eliminar Donación
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // Añadir esta nueva función para eliminar transacciones
+            window.deleteTransaction = function(transactionId) {
+                if (confirm('¿Está seguro que desea eliminar esta donación? Esta acción no se puede deshacer.')) {
+                    try {
+                        // Obtener datos actuales
+                        const savedData = JSON.parse(localStorage.getItem('crowdfundingData'));
+                        
+                        // Filtrar la transacción
+                        savedData.transactions = savedData.transactions.filter(t => t.id != transactionId);
+                        
+                        // Recalcular el total
+                        savedData.totalDonations = savedData.transactions.reduce((sum, t) => sum + t.amount, 0);
+                        
+                        // Guardar cambios
+                        localStorage.setItem('crowdfundingData', JSON.stringify(savedData));
+                        
+                        // Recargar datos en el contrato
+                        contract = new CrowdfundingContract(2000000, contract.distributionPercentages);
+                        savedData.transactions.forEach(t => {
+                            const transaction = new Transaction(
+                                t.id,
+                                t.donor,
+                                t.amount,
+                                new Date(t.timestamp),
+                                t.description
+                            );
+                            contract.addDonation(transaction);
+                        });
+
+                        // Actualizar UI
+                        updateUI();
+                        alert('Donación eliminada exitosamente');
+                    } catch (error) {
+                        console.error('Error al eliminar la donación:', error);
+                        alert('Error al eliminar la donación');
+                    }
+                }
+            };
+            function updateDistributionChart(filteredTransactions = null) {
+                const chart = document.getElementById('distributionChart');
+                const transactions = filteredTransactions || contract.getTransactions();
+                const distribution = contract.getFundDistribution(transactions);
+                
+                chart.innerHTML = Object.entries(distribution)
+                    .map(([area, amount]) => `
+                        <div class="distribution-item">
+                            <p><strong>${area}</strong></p>
+                            <p>Q${amount.toLocaleString('es-GT')}</p>
+                        </div>
+                    `).join('');
+            }
+    
+            // Hacer funciones disponibles globalmente
+            window.filterTransactions = function() {
+                const userFilter = document.getElementById('userFilter').value.toLowerCase();
+                const dateFilter = document.getElementById('dateFilter').value;
+                
+                let transactions = contract.getTransactions();
+                
+                if (userFilter) {
+                    transactions = transactions.filter(t => 
+                        t.donor.toLowerCase().includes(userFilter)
+                    );
+                }
+                
+                if (dateFilter) {
+                    const filterDate = new Date(dateFilter);
+                    transactions = transactions.filter(t => {
+                        const transactionDate = new Date(t.timestamp);
+                        return transactionDate.toDateString() === filterDate.toDateString();
+                    });
+                }
+                
+                displayTransactions(transactions);
+                updateDistributionChart(transactions);
+            };
+    
+            window.resetFilters = function() {
+                document.getElementById('userFilter').value = '';
+                document.getElementById('dateFilter').value = '';
+                displayTransactions(contract.getTransactions());
+                updateDistributionChart();
+            };
+    
+            window.logout = function() {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            };
+    
+            // Inicialización
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (!currentUser || currentUser.role !== 'admin') {
+                    window.location.href = 'login.html';
+                    return;
+                }
+    
+                // Inicializar contrato
+                contract = new CrowdfundingContract(2000000, {
+                    "Servicios de Atención Primaria": 20,
+                    "Salud Materno-Infantil": 15,
+                    "Salud Sexual y Reproductiva": 10,
+                    "Educación y Capacitación en Salud": 10,
+                    "Nutrición y Seguridad Alimentaria": 10,
+                    "Salud Mental y Apoyo Psicosocial": 10,
+                    "Infraestructura y Equipamiento Médico": 10,
+                    "Logística y Cadena de Suministros": 5,
+                    "Monitoreo y Evaluación": 5,
+                    "Fondo de Emergencia": 5
+                });
+    
+                // Cargar datos guardados
+                try {
+                    const savedData = JSON.parse(localStorage.getItem('crowdfundingData')) || {
+                        totalDonations: 0,
+                        transactions: []
+                    };
+    
+                    if (savedData.transactions && savedData.transactions.length > 0) {
+                        savedData.transactions.forEach(t => {
+                            const transaction = new Transaction(
+                                t.id,
+                                t.donor,
+                                t.amount,
+                                new Date(t.timestamp),
+                                t.description
+                            );
+                            contract.addDonation(transaction);
+                        });
+                    }
+    
+                    window.contract = contract;
+                    updateUI();
+                } catch (error) {
+                    console.error('Error al cargar datos:', error);
+                    alert('Error al cargar los datos guardados');
+                }
+            });
+        </script>
+</body>
+</html>

@@ -1,77 +1,75 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Configuraciones de metadatos y compatibilidad -->
-    <meta charset="UTF-8"> <!-- Establece el juego de caracteres para que soporte acentos y caracteres especiales -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ajusta la vista en dispositivos móviles para ser responsiva -->
-    <title>Panel de Usuario - Dona-Medical</title> <!-- Título del documento en la pestaña del navegador -->
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Usuario - Dona-Medical</title>
     <style>
-        /* ===== Estilos generales ===== */
         body {
-            font-family: Arial, sans-serif; 
-            background-color: #e8f5f7;      
-            margin: 0;                    
-            padding: 20px;                
+            font-family: Arial, sans-serif;
+            background-color: #e8f5f7;
+            margin: 0;
+            padding: 20px;
         }
         .container {
-            background-color: #ffffff;     
-            max-width: 1200px;            
-            margin: 0 auto;               
-            padding: 30px;                
-            border-radius: 25px;          
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1); 
+            background-color: #ffffff;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
         .header {
-            background: linear-gradient(135deg, #00b4d8, #0077be); 
-            color: white;                
+            background: linear-gradient(135deg, #00b4d8, #0077be);
+            color: white;
             padding: 20px;
             border-radius: 15px;
             margin-bottom: 30px;
-            display: flex;               
-            justify-content: space-between; 
-            align-items: flex-end;       
-            position: relative;          
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;  /* Cambio para alinear al fondo */
+            position: relative;     /* Para posicionamiento del botón */
         }
         .certificate {
-            background: linear-gradient(135deg, #ffffff, #f8fdff); 
-            padding: 30px;              
-            border: 2px solid #00b4d8;  
+            background: linear-gradient(135deg, #ffffff, #f8fdff);
+            padding: 30px;
+            border: 2px solid #00b4d8;
             border-radius: 15px;
             text-align: center;
             margin-top: 20px;
         }
         .certificate h3 {
-            color: #0077be;            
+            color: #0077be;
             margin-bottom: 20px;
         }
         .certificate .total {
-            font-size: 24px;           
-            color: #023e8a;           
+            font-size: 24px;
+            color: #023e8a;
             margin: 15px 0;
         }
         #logoutButton {
-            width: auto;               
-            padding: 8px 16px;
-            font-size: 14px;          
-            position: absolute;      
-            bottom: 20px;            
-            right: 20px;             
+            width: auto;           /* Anular el width: 100% de los botones */
+            padding: 8px 16px;     /* Reducir el padding para hacerlo más compacto */
+            font-size: 14px;       /* Reducir tamaño de fuente */
+            position: absolute;     /* Posicionamiento absoluto */
+            bottom: 20px;          /* Distancia desde el fondo */
+            right: 20px;           /* Distancia desde la derecha */
         }
+        
         .donation-section {
             display: grid;
-            grid-template-columns: 1fr; 
+            grid-template-columns: 1fr;  /* Cambiar a una columna */
             gap: 30px;
             margin-bottom: 30px;
         }
         .bottom-section {
             display: grid;
-            grid-template-columns: 1fr 1fr; 
+            grid-template-columns: 1fr 1fr;  /* Dos columnas para el contenido inferior */
             gap: 30px;
             margin-bottom: 30px;
         }
         .donation-form {
-            background-color: #f8fdff; 
+            background-color: #f8fdff;
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -86,8 +84,8 @@
         }
         .progress {
             height: 100%;
-            background: linear-gradient(90deg, #00b4d8, #48cae4); 
-            width: 0;                 
+            background: linear-gradient(90deg, #00b4d8, #48cae4);
+            width: 0;
             transition: width 0.5s ease-in-out;
         }
         input[type="number"] {
@@ -167,67 +165,53 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sección de encabezado con logo, nombre de usuario y botón de logout -->
         <div class="header">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <!-- Logo de la aplicación -->
                 <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" alt="Medical Logo" style="width: 40px; height: 40px;">
-                <!-- Texto de saludo con el nombre del usuario -->
                 <h1>Bienvenido, <span id="userName"></span></h1>
             </div>
-            <!-- Botón de cerrar sesión, invoca la función logout() definida en el script -->
             <button type="button" id="logoutButton" onclick="logout()">Cerrar Sesión</button>
         </div>
 
-        <!-- Sección de donación -->
         <div class="donation-section">
             <div class="donation-form">
                 <h2>Realizar Donación</h2>
-                <!-- Campo para ingresar la cantidad de la donación -->
                 <input type="number" id="donationAmount" placeholder="Cantidad a donar">
-                <!-- Botón que llama a makeDonation() para procesar la donación -->
                 <button type="button" onclick="makeDonation()">Donar</button>
 
-                <!-- Barra de progreso que muestra el avance hacia la meta de 2,000,000 -->
                 <div class="progress-container">
                     <h3>Progreso de Recaudación</h3>
                     <div class="progress-bar">
-                        <div class="progress" id="progressBar"></div> <!-- La barra dinámica se actualiza con updateUI() -->
+                        <div class="progress" id="progressBar"></div>
                     </div>
                     <p>Recaudado: Q<span id="currentAmount">0</span> / Meta: Q<span id="goalAmount">2000000</span></p>
                 </div>
             </div>
+            </div>
+            <button type="button" onclick="showCertificate()">Certificado</button>
+            <div id="certificateContainer" style="display: none;" class="certificate">
+                <h3>Certificado de Donación</h3>
+                <p>Agradecemos profundamente a</p>
+                <h2 id="certificateName"></h2>
+                <p>Por su generosa contribución total de</p>
+                <div class="total" id="certificateAmount"></div>
+                <p>Su apoyo hace posible mejorar la salud de nuestra comunidad.</p>
+                <p>Fecha: <span id="certificateDate"></span></p>
+            </div>
         </div>
-
-        <!-- Botón para mostrar/ocultar el certificado de donación -->
-        <button type="button" onclick="showCertificate()">Certificado</button>
-        <!-- Contenedor del certificado de donación que se despliega al pulsar el botón anterior -->
-        <div id="certificateContainer" style="display: none;" class="certificate">
-            <h3>Certificado de Donación</h3>
-            <p>Agradecemos profundamente a</p>
-            <h2 id="certificateName"></h2>
-            <p>Por su generosa contribución total de</p>
-            <div class="total" id="certificateAmount"></div>
-            <p>Su apoyo hace posible mejorar la salud de nuestra comunidad.</p>
-            <p>Fecha: <span id="certificateDate"></span></p>
         </div>
-
-        <!-- Sección inferior con historial de donaciones y distribución -->
         <div class="bottom-section">
             <div class="donation-history">
                 <h2>Historial de Donaciones</h2>
-                <!-- Filtro para ordenar las donaciones por fecha o monto -->
                 <div class="filters">
                     <select id="sortFilter" onchange="filterDonations()">
                         <option value="date">Ordenar por Fecha</option>
                         <option value="amount">Ordenar por Monto</option>
                     </select>
                 </div>
-                <!-- Lista de donaciones del usuario actual -->
                 <div id="donationsList"></div>
             </div>
 
-            <!-- Sección que muestra la distribución de donaciones por áreas -->
             <div class="distribution-chart">
                 <h2>Distribución de tus Donaciones</h2>
                 <div id="distributionChart"></div>
@@ -236,31 +220,22 @@
     </div>
 
     <script type="module">
-        /* Importa las clases necesarias para manejar el contrato y las transacciones */
         import CrowdfundingContract from './CrowdfundingContract.js';
         import Transaction from './Transaction.js';
+        let contract;
 
-        let contract; /* Variable global para manejar la instancia del contrato */
-
-        /* ===== Función que actualiza la interfaz de usuario ===== */
+        // Definir funciones primero
         function updateUI() {
-            // Calcula el porcentaje de progreso con base en el total de donaciones
             const progress = (contract.totalDonations / 2000000) * 100;
-            // Ajusta el ancho de la barra de progreso
             document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
-            // Muestra el total de donaciones en formato local
             document.getElementById('currentAmount').textContent = 
                 contract.totalDonations.toLocaleString('es-GT');
-
-            // Actualiza historial y distribución
             filterDonations();
             updateDistributionChart();
         }
 
-        /* ===== Muestra en la lista las donaciones filtradas u ordenadas ===== */
         function displayDonations(transactions) {
             const list = document.getElementById('donationsList');
-            // Genera cada donación con su monto y fecha
             list.innerHTML = transactions.map(t => `
                 <div class="donation-item">
                     <p>Monto: Q${t.amount.toLocaleString('es-GT')} - 
@@ -269,20 +244,15 @@
             `).join('');
         }
 
-        /* ===== Actualiza la sección de "Distribución de tus Donaciones" ===== */
         function updateDistributionChart() {
             const chart = document.getElementById('distributionChart');
-            // Obtiene el usuario actual
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            // Filtra solo las donaciones de ese usuario
             const userDonations = contract.getTransactions()
                 .filter(t => t.donor === currentUser.username);
-            // Calcula la distribución con base en el total donado por el usuario
             const distribution = contract.calculateUserImpact(
                 userDonations.reduce((sum, t) => sum + t.amount, 0)
             );
             
-            // Genera elementos HTML mostrando cada área y el monto asignado
             chart.innerHTML = Object.entries(distribution)
                 .map(([area, amount]) => `
                     <div class="distribution-item">
@@ -291,35 +261,30 @@
                 `).join('');
         }
 
-        /* ===== Ordena y muestra las donaciones en la interfaz ===== */
         window.filterDonations = function() {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             const filter = document.getElementById('sortFilter').value;
-            // Obtiene las donaciones del usuario actual
             const transactions = contract.getTransactions()
                 .filter(t => t.donor === currentUser.username);
 
-            // Ordena según el valor del select (fecha o monto)
             if (filter === 'amount') {
                 transactions.sort((a, b) => b.amount - a.amount);
             } else {
                 transactions.sort((a, b) => b.timestamp - a.timestamp);
             }
 
-            // Muestra la lista de donaciones resultante
             displayDonations(transactions);
         };
 
-        /* ===== Se ejecuta una sola vez al cargar la página ===== */
+        // Inicialización única
         document.addEventListener('DOMContentLoaded', () => {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            // Si no hay usuario en localStorage, fuerza el login
             if (!currentUser) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            // Inicializa el contrato con meta y distribución de fondos
+            // Inicializar contrato
             contract = new CrowdfundingContract(2000000, {
                 "Servicios de Atención Primaria": 20,
                 "Salud Materno-Infantil": 15,
@@ -333,13 +298,13 @@
                 "Fondo de Emergencia": 5
             });
 
-            // Intenta cargar datos guardados de localStorage
+            // Cargar datos guardados
             try {
                 const savedData = JSON.parse(localStorage.getItem('crowdfundingData')) || {
                     totalDonations: 0,
                     transactions: []
                 };
-                // Si hay transacciones guardadas, se restauran
+
                 if (savedData.transactions && savedData.transactions.length > 0) {
                     savedData.transactions.forEach(t => {
                         const transaction = new Transaction(
@@ -349,16 +314,12 @@
                             new Date(t.timestamp),
                             t.description
                         );
-                        // Agrega cada transacción al contrato
                         contract.addDonation(transaction);
                     });
                 }
 
-                // Expone la instancia del contrato globalmente
                 window.contract = contract;
-                // Muestra el nombre del usuario actual
                 document.getElementById('userName').textContent = currentUser.username;
-                // Actualiza toda la interfaz
                 updateUI();
             } catch (error) {
                 console.error('Error al cargar datos:', error);
@@ -366,7 +327,6 @@
             }
         });
 
-        /* ===== Lógica para procesar una donación ===== */
         window.makeDonation = async function() {
             try {
                 const amount = Number(document.getElementById('donationAmount').value);
@@ -381,7 +341,6 @@
                     window.location.href = 'login.html';
                     return;
                 }
-                // Crea una transacción con la clase Transaction
                 const transaction = new Transaction(
                     Date.now(),
                     currentUser.username,
@@ -390,17 +349,15 @@
                     "Donación médica"
                 );
                 
-                // Agrega la transacción al contrato
+                // Modificar esta línea para pasar la transacción directamente
                 contract.addDonation(transaction);
                 
-                // Actualiza los datos en localStorage
                 const updatedData = {
                     totalDonations: contract.totalDonations,
                     transactions: contract.getTransactions()
                 };
                 localStorage.setItem('crowdfundingData', JSON.stringify(updatedData));
                 
-                // Refresca la interfaz y limpia el campo
                 updateUI();
                 document.getElementById('donationAmount').value = '';
                 alert('¡Donación realizada con éxito!');
@@ -410,54 +367,42 @@
             }
         };
 
-        /* ===== Lógica para cerrar sesión ===== */
         window.logout = function() {
-            // Elimina el usuario actual y redirige al login
             localStorage.removeItem('currentUser');
             window.location.href = 'login.html';
         };
 
-        // Verificación inicial de autenticación (ejecución tardía)
+        // Verificación inicial de autenticación
         document.addEventListener('DOMContentLoaded', () => {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             if (!currentUser) {
-                // Si no hay usuario, forza el login
                 window.location.href = 'login.html';
                 return;
             }
-            // Muestra el nombre del usuario actual en el encabezado
             document.getElementById('userName').textContent = currentUser.username;
-            // Refresca la interfaz
             updateUI();
         });
-
-        /* ===== Muestra/oculta el certificado de donación ===== */
         window.showCertificate = function() {
-            const container = document.getElementById('certificateContainer');
-            
-            // Si el certificado está visible, lo oculta
-            if (container.style.display === 'block') {
-                container.style.display = 'none';
-                return;
-            }
-            
-            // Obtiene el usuario actual
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            // Calcula la suma de todas sus donaciones
-            const userDonations = contract.getTransactions()
-                .filter(t => t.donor === currentUser.username)
-                .reduce((sum, t) => sum + t.amount, 0);
-    
-            // Muestra nombre, total donado y fecha
-            document.getElementById('certificateName').textContent = currentUser.username;
-            document.getElementById('certificateAmount').textContent = 
-                `Q${userDonations.toLocaleString('es-GT')}`;
-            document.getElementById('certificateDate').textContent = 
-                new Date().toLocaleDateString('es-GT');
-            
-            // Despliega el contenedor del certificado
-            container.style.display = 'block';
-        };
+                const container = document.getElementById('certificateContainer');
+                
+                if (container.style.display === 'block') {
+                    container.style.display = 'none';
+                    return;
+                }
+                
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const userDonations = contract.getTransactions()
+                    .filter(t => t.donor === currentUser.username)
+                    .reduce((sum, t) => sum + t.amount, 0);
+        
+                document.getElementById('certificateName').textContent = currentUser.username;
+                document.getElementById('certificateAmount').textContent = 
+                    `Q${userDonations.toLocaleString('es-GT')}`;
+                document.getElementById('certificateDate').textContent = 
+                    new Date().toLocaleDateString('es-GT');
+                    
+                container.style.display = 'block';
+            };
     </script>
 </body>
 </html>

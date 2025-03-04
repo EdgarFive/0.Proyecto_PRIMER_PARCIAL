@@ -9,10 +9,11 @@
         "test": "echo \"No test specified\" && exit 1"
     },
     "keywords": [
-        "medicina",
-        "donaciones",
+        "medical",
+        "donations",
         "smart-contract",
-        "linked-list"
+        "linked-list",
+        "guatemala"
     ],
     "author": {
         "name": "EdgarChinchilla"

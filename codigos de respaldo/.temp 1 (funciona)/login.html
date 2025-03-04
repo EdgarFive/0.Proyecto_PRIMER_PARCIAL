@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Medical Donations</title>
     <style>
-        /* Estilos generales de la página */
         body {
             font-family: Arial, sans-serif;
             background-color: #e8f0f3;
@@ -16,7 +15,6 @@
             align-items: center;
             min-height: 100vh;
         }
-        /* Contenedor del formulario de login */
         .login-container {
             background-color: white;
             padding: 30px;
@@ -25,7 +23,6 @@
             width: 100%;
             max-width: 400px;
         }
-        /* Sección del logo y título */
         .logo-title {
             display: flex;
             align-items: center;
@@ -37,7 +34,6 @@
             width: 50px;
             height: 50px;
         }
-        /* Estilos para los campos de entrada */
         input {
             width: 100%;
             padding: 12px;
@@ -46,7 +42,6 @@
             background-color: #f5f7f9;
             margin-bottom: 15px;
         }
-        /* Estilos para los botones */
         button {
             width: 100%;
             background-color: #00b4d8;
@@ -60,24 +55,26 @@
         button:hover {
             background-color: #0096c7;
         }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo-title">
             <img src="https://cdn-icons-png.flaticon.com/512/3004/3004458.png" alt="Medical Logo" class="logo">
-            <h1>Dona-Medical</h1>
+            <h1>Medical Donations</h1>
         </div>
-        <!-- Campos para ingresar usuario y contraseña -->
         <input type="text" id="username" placeholder="Username">
         <input type="password" id="password" placeholder="Password">
-        <!-- Botones para iniciar sesión y registrarse -->
         <button onclick="login().catch(console.error)">Login</button>
         <button onclick="registerUser().catch(console.error)">Register</button>
     </div>
 
     <script>
-        // Función para generar una versión segura (hash) de la contraseña
+        // Función para hacer la contraseña más segura
         async function makePasswordSecure(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -86,29 +83,24 @@
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('');
         }
-
-        // Usuario administrador predefinido con contraseña encriptada
+        // Usuario administrador predefinido
         const admin = {
             username: 'admin',
-            password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', // Contraseña en hash SHA-256
+            password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', // admin123 convertida
             role: 'admin'
         };
 
-        // Recupera usuarios almacenados en localStorage o inicia con el admin por defecto
         let users = JSON.parse(localStorage.getItem('users')) || [admin];
 
-        // Función para iniciar sesión
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const securePassword = await makePasswordSecure(password);
 
-            // Busca un usuario con credenciales correctas
             const user = users.find(u => u.username === username && u.password === securePassword);
             
             if (user) {
                 localStorage.setItem('currentUser', JSON.stringify(user));
-                // Redirige según el rol del usuario
                 if (user.role === 'admin') {
                     window.location.href = 'admin_dashboard.html';
                 } else {
@@ -119,7 +111,6 @@
             }
         }
 
-        // Función para registrar un nuevo usuario
         async function registerUser() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
@@ -146,12 +137,11 @@
             alert('Usuario registrado exitosamente');
         }
 
-        // Función para migrar contraseñas antiguas no encriptadas a formato seguro
         async function migrateOldPasswords() {
             const oldUsers = JSON.parse(localStorage.getItem('users')) || [];
             if (oldUsers.length > 0) {
                 for (let user of oldUsers) {
-                    if (user.password.length < 64) { // Si la contraseña no está en hash
+                    if (user.password.length < 64) { // Si no está hasheada
                         user.password = await makePasswordSecure(user.password);
                     }
                 }
